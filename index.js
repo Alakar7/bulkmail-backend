@@ -35,6 +35,7 @@ const sendMails = async ({ msg, emailList }) => {
 
 app.post("/sendemail", async (req, res) => {
   try {
+     console.log("BODY RECEIVED:", req.body);
     await sendMails(req.body);
     res.status(200).json({ success: true });
   } catch (err) {
