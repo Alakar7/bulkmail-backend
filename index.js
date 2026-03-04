@@ -5,7 +5,7 @@ const nodemailer = require("nodemailer");
 const app = express();
 
 app.use(cors({
-  origin: "https://bulkmail-frontend-murex.vercel.app/"
+  origin: "https://bulkmail-frontend-murex.vercel.app"
 }));
 app.use(express.json());
 
@@ -26,21 +26,28 @@ const emailTemplate = (msg, recipient) => ({
 });
 
 const sendMails = async ({ msg, emailList }) => {
-  for (const recipient of emailList) {
-    const mailOptions = emailTemplate(msg, recipient);
-    await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${recipient}`);
+  if (!emailList || !Array.isArray(emailList)) {
+    throw new Error("Invalid or missing emailList");
   }
+
+  const promises = emailList.map((recipient) => {
+    const mailOptions = emailTemplate(msg, recipient);
+    return transporter.sendMail(mailOptions);
+  });
+
+  await Promise.all(promises);
 };
 
 app.post("/sendemail", async (req, res) => {
+  console.log("Request received");
+
   try {
-     console.log("BODY RECEIVED:", req.body);
     await sendMails(req.body);
+    console.log("Emails sent successfully");
     res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false });
+    console.error("Email error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
