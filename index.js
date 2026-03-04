@@ -4,9 +4,7 @@ const nodemailer = require("nodemailer");
 
 const app = express();
 
-app.use(cors({
-  origin: "https://bulkmail-frontend-murex.vercel.app"
-}));
+app.use(cors());
 app.use(express.json());
 
 // ✅ Use ENV variables (IMPORTANT)
