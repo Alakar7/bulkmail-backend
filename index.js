@@ -1,61 +1,77 @@
-const express = require("express");
-const cors = require("cors");
+const express = require("express")
+const cors = require("cors")
+const app = express()
+
+app.use(cors(corsOptions))
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", 'https://bulkmail-frontend-murex.vercel.app'); // update to match the domain you will make the request from
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+  });
+  
+  app.options('*', (req, res) => { 
+    // Pre-flight request. Reply successfully:
+    res.header('Access-Control-Allow-Origin', 'https://bulkmail-frontend-murex.vercel.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.send();
+  });
+  
+var corsOptions = {
+    origin: ["https://depfront.vercel.app/"]
+  };
+
+app.use(express.json())
+
+//Install NODEMAILER
 const nodemailer = require("nodemailer");
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-// ✅ Use ENV variables (IMPORTANT)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service:"gmail",
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD,
+    // TODO: replace `user` and `pass` values from <https://forwardemail.net>
+    user: "alakarsamy2014@gamil.com",
+    pass: "acgh ybab lktf bkek",
   },
 });
 
-const emailTemplate = (msg, recipient) => ({
-  from: process.env.EMAIL,
-  to: recipient,
-  subject: "You get Text Message from Your App!",
-  text: msg,
-});
-
-const sendMails = async ({ msg, emailList }) => {
-  if (!emailList || !Array.isArray(emailList)) {
-    throw new Error("Invalid or missing emailList");
-  }
-
-  const promises = emailList.map((recipient) => {
-    const mailOptions = emailTemplate(msg, recipient);
-    return transporter.sendMail(mailOptions);
+const emailTemplate = (message, recipient) => ({
+    from: "alakarsamy2014@gamil.com",
+    to: recipient,
+    subject: 'You get Text Message from Your App!',
+    text: message
   });
 
-  await Promise.all(promises);
+const sendMails = ({message, emailList}) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            for (const recipient of emailList) {
+                const mailOptions = emailTemplate(message, recipient);
+        
+                await transporter.sendMail(mailOptions);
+                console.log(`Email sent to ${recipient}`);
+            }
+            resolve("Success")
+        } catch (error) {
+            console.error('Error sending emails:', error.message);
+            reject(error.message)
+        }
+    })
 };
 
-app.post("/sendemail", async (req, res) => {
-  console.log("Request received");
+app.post("/sendemail",function(req,res){
 
-  try {
-    await sendMails(req.body);
-    console.log("Emails sent successfully");
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error("Email error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+    sendMails(req.body).then((response) => {
+        console.log(response)
+        res.send(true);
+    })
+    .catch((error) => {
+        res.send(false);
+    })
 
-// ✅ Health check (VERY IMPORTANT)
-app.get("/", (req, res) => {
-  res.send("Mail server running");
-});
+})
 
-// ✅ Use Render PORT
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server running on port", PORT);
-});
+app.listen(5000,function(){
+    console.log("Server Started.....")
+})
